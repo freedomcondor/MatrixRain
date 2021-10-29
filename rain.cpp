@@ -24,7 +24,7 @@ class Line
 	int screen_width, screen_height, short_limit, long_limit;
 	bool** log;
 	int col, up_row, down_row;
-	int new_row()
+	int new_row(bool init)
 	{
 		int a = floor(rand() * 1.0 / RAND_MAX * screen_width);
 		while ((*log)[a] == true)
@@ -33,8 +33,12 @@ class Line
 		}
 		col = a;
 		(*log)[a] = true;
-		//down_row = -floor(rand() * 1.0 / RAND_MAX * screen_height);
-		down_row = 0;
+
+		if (init)
+			down_row = -floor(rand() * 1.0 / RAND_MAX * screen_height);
+		else
+			down_row = 0;
+
 		int length = rand() * 1.0 / RAND_MAX * (long_limit - short_limit) + short_limit;
 		up_row = down_row - length;
 		return 0;
@@ -52,9 +56,9 @@ class Line
 	int step()
 	{
 		if (col == 0)
-			new_row();
+			new_row(true);
 		if (up_row > screen_height)
-			new_row();
+			new_row(false);
 
 		up_row++;
 		down_row++;
