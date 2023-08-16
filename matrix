@@ -1,0 +1,6 @@
+#!/bin/bash
+# run 'tput cols' and 'tput lines' to get col and line numbers
+# adjust rain path and cp this file to /usr/local/bin
+gnome-terminal --full-screen -- /home/harry/Programs/MatrixRain/rain 187 59
+exit
+
