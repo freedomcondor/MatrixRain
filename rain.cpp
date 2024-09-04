@@ -2,6 +2,7 @@
 #include<iostream>
 #include<math.h>
 #include <unistd.h>
+#include <vector>
 using namespace std;
 
 // ---------- terminal cursor and screen ----------------
@@ -11,8 +12,25 @@ int clear_screen()
 	return 0;
 }
 
-int loc_print(int row, int col, char ch)
+int loc_print(int row, int col, char ch, int level)
 {
+	switch (level) {
+		/*
+		case 0 : cout << "\033[1;37m"; break;  // high light white
+		case 1 : cout << "\033[0;37m"; break;  // white
+		case 2 : cout << "\033[1m"; break;     // high light green
+		case 3 : cout << "\033[1m"; break;     // high light green
+		case 4 : cout << "\033[1m"; break;     // high light green
+		default: cout << "\033[0m"; break;
+		*/
+
+		case 0 : cout << "\033[1;37m"; break;  // high light white
+		case 1 : cout << "\033[0;37m"; break;  // white
+		case 2 : cout << "\033[1m"; break;     // high light green
+		case 3 : cout << "\033[0m"; break;     // green
+		case 4 : cout << "\033[1;32m"; break;  // high light dark green
+		default: cout << "\033[0;32m"; break;  // dark green
+	}
 	cout << "\033[" << row << ";" << col << "H" << ch;
 	return 0;
 }
@@ -24,6 +42,10 @@ class Line
 	int screen_width, screen_height, short_limit, long_limit;
 	bool** log;
 	int col, up_row, down_row;
+
+	int hightlight_length;
+	vector<char> last_chars;
+
 	int new_row(bool init)
 	{
 		int a = floor(rand() * 1.0 / RAND_MAX * screen_width);
@@ -49,9 +71,11 @@ class Line
 		screen_height(_screen_height),
 		long_limit(_long_limit),
 		short_limit(_short_limit),
+		hightlight_length(6),
 		log(_log),
 		col(0)
 	{
+		last_chars.resize(hightlight_length);
 	}
 	int step()
 	{
@@ -63,15 +87,26 @@ class Line
 		up_row++;
 		down_row++;
 
-		if ((down_row >= 1) && 
-		    (down_row <= screen_height))
+		for (int i=hightlight_length-1; i>=0; i--)
 		{
-			char c = rand() * 1.0 / RAND_MAX * (126 - 32) + 32;
-			loc_print(down_row, col, c);
+			if ((down_row-i >= 1) &&
+				(down_row-i <= screen_height))
+			{
+				if (i == 0)
+				{
+					char c = rand() * 1.0 / RAND_MAX * (126 - 32) + 32;
+					last_chars[0] = c;
+				}
+				else
+					last_chars[i] = last_chars[i-1];
+
+				loc_print(down_row-i, col, last_chars[i], i);
+			}
 		}
+
 		if (up_row > 0)
 		{
-			loc_print(up_row, col, ' ');
+			loc_print(up_row, col, ' ', -1);
 			(*log)[col] = false;
 		}
 		return 0;
@@ -86,9 +121,8 @@ int main(int argc, char** argv)
 	{
 		sscanf(argv[1], "%d", &screen_width);
 		sscanf(argv[2], "%d", &screen_height);
-		screen_width--;
-		screen_height--;
-		screen_height--;
+		//screen_width--;
+		//screen_height--;
 	}
 	else
 	{
@@ -114,8 +148,10 @@ int main(int argc, char** argv)
 	{
 		for (int i = 0; i < lineNumber; i++)
 			line[i]->step();
-		cout << endl;
+		cout << "\033[1;1H" << endl;
+
 		usleep(100000);
+		//usleep(80000);
 	}
 
 	free(log);
