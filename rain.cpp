@@ -1,7 +1,7 @@
-//#include<stdio.h>
 #include<iostream>
-#include<math.h>
-#include <unistd.h>
+#include<cmath>
+#include <unistd.h> // for usleep in Unix
+#include <chrono>   // for time, and for random seed
 #include <vector>
 using namespace std;
 
@@ -139,7 +139,15 @@ int main(int argc, char** argv)
 	int line_short_limit = 20;
 	int line_long_limit = screen_height * 1.5;
 
-	srand(time(NULL));
+	// get time for random seed
+	using std::chrono::duration_cast;
+	using std::chrono::system_clock;
+	using std::chrono::milliseconds;
+	auto millisec_since_epoch =
+		duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+	srand(millisec_since_epoch);
+	//srand(time(NULL));
+
 	Line *line[lineNumber];
 	for (int i = 0; i < lineNumber; i++)
 		line[i] = new Line(screen_width, screen_height, line_short_limit, line_long_limit, &log);
