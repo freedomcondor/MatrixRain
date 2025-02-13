@@ -45,6 +45,8 @@ class Line
 
 	int hightlight_length;
 	vector<char> last_chars;
+	int step_time, step_time_left; // in u second
+	int short_time_limit, long_time_limit;
 
 	int new_row(bool init)
 	{
@@ -63,19 +65,39 @@ class Line
 
 		int length = rand() * 1.0 / RAND_MAX * (long_limit - short_limit) + short_limit;
 		up_row = down_row - length;
+
+		//# step time
+		step_time = short_time_limit + floor(rand() * 1.0 / RAND_MAX * (long_time_limit - short_time_limit));
+		step_time_left = step_time;
 		return 0;
 	}
 	public:
-	Line(int _screen_width, int _screen_height, int _short_limit, int _long_limit, bool** _log):
+	int getTimeLeft()
+	{
+		return step_time_left;
+	}
+	Line(int _screen_width, int _screen_height, int _short_limit, int _long_limit, int _short_time_limit, int _long_time_limit, bool** _log):
 		screen_width(_screen_width),
 		screen_height(_screen_height),
 		long_limit(_long_limit),
 		short_limit(_short_limit),
 		hightlight_length(6),
 		log(_log),
-		col(0)
+		col(0),
+		long_time_limit(_long_time_limit),
+		short_time_limit(_short_time_limit)
 	{
 		last_chars.resize(hightlight_length);
+	}
+	int step(int past_time)
+	{
+		step_time_left -= past_time;
+		if (step_time_left <= 0)
+		{
+			step_time_left = step_time;
+			step();
+		}
+		return 0;
 	}
 	int step()
 	{
@@ -138,6 +160,8 @@ int main(int argc, char** argv)
 	int lineNumber = screen_width / 5;
 	int line_short_limit = 20;
 	int line_long_limit = screen_height * 1.5;
+	int steptime_short_limit = 50000;
+	int steptime_long_limit = 150000;
 
 	// get time for random seed
 	using std::chrono::duration_cast;
@@ -150,16 +174,21 @@ int main(int argc, char** argv)
 
 	Line *line[lineNumber];
 	for (int i = 0; i < lineNumber; i++)
-		line[i] = new Line(screen_width, screen_height, line_short_limit, line_long_limit, &log);
+		line[i] = new Line(screen_width, screen_height, line_short_limit, line_long_limit, steptime_short_limit, steptime_long_limit, &log);
 
 	while (1)
 	{
+		// find shortest time left
+		int min_time_left = steptime_long_limit; // Initialize to maximum integer value
 		for (int i = 0; i < lineNumber; i++)
-			line[i]->step();
+			if (line[i]->getTimeLeft() < min_time_left)
+				min_time_left = line[i]->getTimeLeft();;
+
+		for (int i = 0; i < lineNumber; i++)
+			line[i]->step(min_time_left);
 		cout << "\033[1;1H" << endl;
 
-		usleep(100000);
-		//usleep(80000);
+		usleep(min_time_left);
 	}
 
 	free(log);
