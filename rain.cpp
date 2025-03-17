@@ -40,7 +40,7 @@ class Line
 {
 	private:
 	int screen_width, screen_height, short_limit, long_limit;
-	bool** log;
+	std::vector<bool>& log;
 	int col, up_row, down_row;
 
 	int hightlight_length;
@@ -51,12 +51,12 @@ class Line
 	int new_row(bool init)
 	{
 		int a = floor(rand() * 1.0 / RAND_MAX * screen_width);
-		while ((*log)[a] == true)
+		while (log[a] == true)
 		{
 			a = floor(rand() * 1.0 / RAND_MAX * screen_width);
 		}
 		col = a;
-		(*log)[a] = true;
+		log[a] = true;
 
 		if (init)
 			down_row = -floor(rand() * 1.0 / RAND_MAX * screen_height);
@@ -76,7 +76,7 @@ class Line
 	{
 		return step_time_left;
 	}
-	Line(int _screen_width, int _screen_height, int _short_limit, int _long_limit, int _short_time_limit, int _long_time_limit, bool** _log):
+	Line(int _screen_width, int _screen_height, int _short_limit, int _long_limit, int _short_time_limit, int _long_time_limit, std::vector<bool>& _log):
 		screen_width(_screen_width),
 		screen_height(_screen_height),
 		long_limit(_long_limit),
@@ -129,7 +129,7 @@ class Line
 		if (up_row > 0)
 		{
 			loc_print(up_row, col, ' ', -1);
-			(*log)[col] = false;
+			log[col] = false;
 		}
 		return 0;
 	}
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
 
 	clear_screen();
 
-	bool* log = (bool*)malloc(sizeof(bool)*screen_width);
+	std::vector<bool> log(screen_width, false);
 	log[0] = true;
 
 	int lineNumber = screen_width / 5;
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
 
 	Line *line[lineNumber];
 	for (int i = 0; i < lineNumber; i++)
-		line[i] = new Line(screen_width, screen_height, line_short_limit, line_long_limit, steptime_short_limit, steptime_long_limit, &log);
+		line[i] = new Line(screen_width, screen_height, line_short_limit, line_long_limit, steptime_short_limit, steptime_long_limit, log); // 传递 log
 
 	while (1)
 	{
@@ -182,7 +182,7 @@ int main(int argc, char** argv)
 		int min_time_left = steptime_long_limit; // Initialize to maximum integer value
 		for (int i = 0; i < lineNumber; i++)
 			if (line[i]->getTimeLeft() < min_time_left)
-				min_time_left = line[i]->getTimeLeft();;
+				min_time_left = line[i]->getTimeLeft();
 
 		for (int i = 0; i < lineNumber; i++)
 			line[i]->step(min_time_left);
@@ -190,8 +190,6 @@ int main(int argc, char** argv)
 
 		usleep(min_time_left);
 	}
-
-	free(log);
 
 	return 0;
 }
